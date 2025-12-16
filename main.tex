@@ -1,0 +1,919 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+
+\lstset{
+  basicstyle=\footnotesize\ttfamily,
+  breaklines=true,
+  frame=single,
+  keywordstyle=\color{blue},
+  commentstyle=\color{green}
+}
+
+\title{Programming Paradigms Summary}
+\author{Nora Jasharaj}
+\date{Somewhere in 2025}
+
+
+\begin{document}
+
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\section{Syntax }
+
+\subsubsection{Motivation}
+\textit{Goal:} Specify a programming language. \\
+\subsection{Concepts to Specify Syntax}
+\begin{itemize} 
+\item Concatenation
+\item Alternation/Choice (das Ding ist  da, das andere au und dann aber au das ohne das andere au)
+\item Repetition (Kleene closure *)
+\item Recursion
+\item Regular expr $\to$ Recognized by scanners
+\item CFGs $\to$ Recognized by parsers
+\end{itemize}
+Concepts 1-3 are included in RegEx \\ $ \Rightarrow $ \textbf{recognized by scanners}
+With 4 we are in total in context-free grammars (CFG). \\
+
+\subsubsection{Syntax vs Semantics}
+\textit{Syntax:} Structure of code \\
+\textit{Semantics: } Meaning of code \\
+PLs can have different syntax but same semantics, no shit blyat. \\
+$\Rightarrow$ \textbf{recognized by parsers} \\
+\subsubsection{Tokens}
+\textbf{Definition:}\\ Basic building blocks of every PL. Keywords,identifiers, constants,operators. \\
+\textbf{REGEX} are used to specify tokens. \\
+A regex is one of a character, the empty string, the concatenation of two regexes, a REGEX followed by the Kleene star *. \\
+Numeric constants accepted by calculators. \\
+\begin{verbatim}
+    number -> integer | real
+    integer -> digit digit * (also ein digit mit 0 oder mehr digits)
+    real -> (integer exponent) | decimal (exponent | epsilon)
+    decimal -> digit* /. digit | digit.) digit*
+    exponent -> (e | E) (+ | - | epsilon) integer
+    digit -> 0 | 1 |... | 9
+\end{verbatim}
+\textbf{More compact syntax for REGEX} \\
+\begin{verbatim}
+Language of tokens: {c, cac, cbc, cacac, cbcbc, cacbc, cbcac,...}
+Token -> cMore*
+More -> AorB c
+AorB -> a | b
+
+Shorter notation: Nest all into one.
+
+    c( (a | b) c ) * 
+    -> thats ur token in the nested, more compaact verison
+\end{verbatim}
+
+\subsubsection{Identifiers in popular PLs}
+Different PLs allow different identifiers. \\
+Case sensitive vs case- insenstive. \\
+Letters and digits are almost always allowed \\
+Underscore: allowed in most languages \\
+\textbf{In addition to syntax rules:} Conventions (for instance Java: ClassName, variableName) \\
+\subsubsection{Whitespace in  popular PLs}
+Free format vs. formatting as syntax: \\
+Spaces and tabs sometimes matter, line breaks sometimes matter (Python, js) \\
+\\
+\subsection{Context free grammars}
+\textit{basically REGEX + recursion} \\
+Ex: Arithmetic expressions  \\
+\textbf{Definition CFG: } \\
+$G = (N, T, R, s)$ \\
+N $=$ \textit{finite} set of non-terminals (left side in grammar) \\
+T $=$ \textit{finite} set of terminals = alphabet of the language = (for Pls) tokens of the language \\
+R $=$ \textit{finite} relation from N to $ (N \cup T) * $ $=$ production rules \\
+s $=$ start symbol \\
+\subsubsection{Derivations}
+Create concrete strigs from the grammar. \\
+Begin with start symbol, repeat until no non-terminams remain. \\
+\textbf{Example: } \\
+\begin{verbatim}
+    expr -> id | number | expr) | expr op expr
+    op -> + | -| * | /
+
+    Derivation of foo * x + bar
+
+    expr --> (derivation) expr op expr 
+    --> expre op id
+    --> expr +  id
+    --> expr op expr + id 
+    --> expr op id + id 
+    --> expr * id + id
+    --> expr id * id + id
+\end{verbatim}
+ \subsubsection{Parse trees}
+ \textit{Tree structure representation of a derivation} \\
+ root = start symbol \\
+ leaf nodes = tokens that result from derivation \\
+ und da fehlt noch etwas aber digga Syntaxbaum mein Gott nt so schwierig. \\
+ \textbf{Example: }
+ \begin{figure} [H]
+     \centering
+     \includegraphics[width=0.5\linewidth]{ExampleDerivation.png}
+     \caption{Example of a derivation of our string}
+     \label{fig:enter-label}
+ \end{figure}
+ \textit{Not all  grammars are equal!} \\
+ Each language has infinitely many grammars. Some grammars are even ambiguous ( a single string may have multiple derivations; unambiguous grammars facilitate parsing) \\
+ A grammar should reflect the \textbf{internal structure} of the PL( E.g associativity and precedence of operators). \\
+ \subsection{Scanning}
+ \subsubsection{Big Picture}
+ Source code = sequence of characters \\
+ General idea: \\
+ read one character at a time, whenever a full token is recognized, return it. \\
+ When no token can be recognized, report an error. \\
+ Sometimes, need to look  multiple characters ahead to determine the next token. \\
+
+\subsection{Option 1: Ad-hoc Scanners}
+\begin{itemize} 
+\item Manually implemented.
+\item Handle common tokens first.
+\item Used in production compilers: Compact code, efficient.
+\end{itemize}
+
+\subsection{From Reg. Expr. to DFA}
+\begin{itemize} 
+\item Regex → NFA → DFA (avoid multiple states) → Minimal DFA (remove unreachable/non-distinguishable).
+\end{itemize}
+
+\subsection{From DFA to Scanner}
+\begin{itemize} 
+\item Options: Switch statements (hand-written) or Table-based (auto-generated, driver indexes table).
+\end{itemize}
+
+\subsection{Table-based Scanning}
+\begin{itemize} 
+\item Transition table by state/input.
+\item Driver: Moves state, returns token, or errors.
+\end{itemize}
+
+\subsection{Recognizing Multiple Tokens}
+\begin{itemize} 
+\item Merge token automata with $\epsilon$ to starts.
+\item Apply NFA-DFA transformation.
+\end{itemize}
+
+\subsection{Longest Possible Token Rule}
+\begin{itemize} 
+\item If prefix overlap (e.g., 3.1 vs 3.141): Accept longest.
+\item Look ahead ≥1 char to decide end.
+\end{itemize}
+
+\subsection{Top-down vs. Bottom-up Parsing}
+\begin{itemize} 
+\item Top-down: From root, expand non-terminals, predict rule.
+\item Bottom-up: Combine tokens to subtrees, add parents.
+\end{itemize}
+
+\subsection{Classes of Parsing Algorithms}
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+ & LL(k) & LR(k) \\ \hline
+Tree construction & Top-down & Bottom-up \\ \hline
+Scanning & Left-to-right & Left-to-right \\ \hline
+Derivations & Left-most & Right-most \\ \hline
+Algorithm & Predictive & Shift-reduce \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Top-down Parsing}
+\begin{itemize} 
+\item LL(k): Left-to-right, Left-most, k lookahead.
+\item Approaches: Recursive descent (manual for simple langs) or Table-driven (auto table + driver).
+\end{itemize}
+
+\subsection{Recursive Descent parser:} \\
+One function for each non-terminal N: \\
+Chooses production based on next \textit{k } non-terminal on the right-hand on right-hand side, call their function. \\
+For terminals on the right-hand side, call \textit{match function (consumes input token(is expected) or raises an error} \\
+\subsection{Generating Top-Down Parser}
+\begin{itemize}
+\item LL(k): Predict rule using PREDICT sets from FIRST(N) (terminals first when expanding N) and FOLLOW(N) (terminals after N).
+\item Computing FIRST: For A → X1...Xk, add FIRST(X1) - ε, then if ε in FIRST(X1), add FIRST(X2), etc.; if all nullable, add ε.
+\item Computing FOLLOW: Start symbol gets EOF; for B → αAβ, add FIRST(β) - ε to FOLLOW(A); if β nullable or no β, add FOLLOW(B) to FOLLOW(A).
+\item PREDICT(A → α): If ε not in FIRST(α), = FIRST(α); else (FIRST(α) - ε) ∪ FOLLOW(A).
+\item Parse Table: For each A → α, for t in PREDICT, M[A,t] = A → α; undefined = error.
+\end{itemize}
+
+\subsection{Table-based Predictive Parsing}
+\begin{itemize} 
+\item Stack: Push EOF, start symbol.
+\item Repeat: Pop x; if terminal/EOF, match next token; if non-terminal, push RHS of M[x, next] in reverse.
+\item Error if mismatch or no entry.
+\end{itemize}
+
+\subsection{Bottom-up Parsing}
+\begin{itemize} 
+\item LR(k): Left-to-right, right-most derivation, k lookahead.
+\item Shift-reduce: Shift tokens, reduce groups to non-terminals.
+\item Table-based: Action table (shift/reduce/accept/error), Goto table (state after reduce).
+\item Stack: (symbol, state) pairs.
+\item Algorithm: Based on action[s, next]: shift push (token, s'), reduce pop m, push (N, goto[s', N]), accept/ error.
+\item Tables mostly auto generater
+\end{itemize}
+
+
+\subsubsection{FOLLOW Sets}
+Set of all terminals that may follow A in some derivation. Including symbol EOF for \textit{end of file}. \textbf{Never includes $\epsilon$!} \\
+\textbf{Computing follow sets}
+\begin{itemize}
+    \item if A is start symbol but \textbf{EOF} in FOLLOW(A)
+\item Productions based on the form B $ \rightarrow \alpha A \beta $ Add FIRST($\beta$) without epsilon to FOLLOW(A)
+\item Productions of the form $B \rightarrow \alpha$ or B $\rightarrow \alpha A \beta $ where $\beta \rightarrow \epsilon$ Add FOLLOW(B)  to FOLLOW(A)
+\end{itemize}
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{followExample.png}
+    \caption{Follow set example}
+    \label{fig:enter-label}
+\end{figure}
+\subsubsection{PREDICT SETS}
+Rule: Which terminals to look for in LL(1) parser. \\
+If next input token is in PREDICT of rule, apply the rule. \\
+\textbf{Computing the PREDICT set for rule $A    \rightarrow \epsilon$ :} \\
+If $ \epsilon $ in FIRST($\alpha$) :
+PREDICT$(A \rightarrow \alpha) =$ FIRST $(\alpha) - {\epsilon})\cup$ FOLLOW(A) \\
+\textit{Otherwise:}
+PREDICT($A \rightarrow \alpha$ = FIRST($\alpha$).
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{predict.png}
+    \caption{Predict example}
+    \label{fig:enter-label}
+\end{figure}
+\
+\subsection{Shift reduce Algorithm}
+\textbf{Repeat} until all tokens read and all symbols reduced to start symbol. \\
+\textbf{Shift}(i.e read) input tokens. \\
+Try to reduce a group of  symbols into a single non-terminal. 
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{shiftRecuceParsing.png}
+    \caption{Examle shift reduce parsing}
+    \label{fig:enter-label}
+\end{figure}
+
+\section{Names, Scopes, and Bindings}
+\subsection{Binding}
+\begin{itemize} 
+\item between entities to their names.
+\textbf{For instance: } a variable bound to a memory object, a function bound to the code implementing the function. 
+\item Static (compile-time) vs dynamic (run-time).
+\end{itemize}
+
+\subsection{Scope}
+\begin{itemize} 
+\item Region where binding active; maximal no-change region.
+\item Nested scopes for subroutines.
+\item Static scoping: From text, up nested scopes.
+\item Dynamic scoping: From control flow, up call stack.
+\item Built-in objects: Invisible outer-most scope.
+\end{itemize}
+
+\subsection{Object Lifetime and Storage}
+\begin{itemize} 
+\item Lifetime: Global (program), local (function), heap (arbitrary).
+\item Storage: Static (globals, constants), stack (locals, activation records), heap (dynamic, managed GC).
+\end{itemize}
+\subsubsection{Statically allocated memory}
+Depending on the PL, used for: global variables, constant literals, symbol tables, programm code itself, compile times constants.
+\subsubsection{Stack based allocation}
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{stackbasedAllocation.png}
+    \caption{Stack based allocation}
+    \label{fig:enter-label}
+\end{figure}
+\subsubsection{Heap based allocation}
+For \textbf{dynamically allocated date structures} and objects whose \textbf{size  is statically unknown} (for exmaple objects in java) \\
+Some PLs managed memory: \\
+\textit{Unreachable  objects: } implicitly deallocated, unreachable = no active binding \\
+\textit{Less control but fewer bugs} e.g no use-after-free
+\subsubsection{Static vs dynamic Scoping}
+\textbf{Static scoping: } binding of a name can be derived from program text. \\
+Move up nested scopes until finding a binding. \\
+\newline
+\textbf{Dynamic scoping: } binding of a name depends on control flow. \\
+Move up functions on call stack until finding a binding. 
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{dynamicScoping.png}
+    \caption{Example on dynamic scoping, really just  looking for ANY point where it has been declared in its scope, eve if after calling it}
+    \label{fig:enter-label}
+\end{figure}
+
+\subsection{Aliasing and Overloading}
+\begin{itemize} 
+\item Aliasing: Multiple names to one object (pointers, references).
+\item Overloading: One name to multiple objects.
+\end{itemize}
+
+\subsection{Referencing Environment}
+\begin{itemize} 
+\item Set of bindings.
+\item For function refs: Shallow binding (at call, dynamic scoping), deep binding (at creation, static scoping, closures).
+\item Closure: Function + captured environment.
+\end{itemize}
+
+\subsubsection{Shallow binding}
+Referencing environment created when the function is called. \\
+Common in languages with \textbf{dynamic scoping}
+\subsubsection{Deep binding}
+Referencing environment created when the reference to the function is created. \\
+Common in languages with \textbf{static scoping}
+\subsubsection{Closure}
+Implementation of deep binding. \\
+Is the representation of referencing environment + function itself? \\
+When creating a reference to a function, closure is created. 
+\section{Control Flow}
+
+\section{Control Flow}
+\begin{itemize} 
+\item Ordering of instructions: Fundamental to computation.
+\item Mechanisms: Sequencing, selection, iteration, recursion, concurrency, exceptions.
+\item Each PL has own rules, focus on concepts (or urself queen/king).
+\end{itemize}
+
+\subsection{Expression Evaluation}
+\begin{itemize} 
+\item Operator (built-in function with simple syntax) vs operand (arguments of operator).
+\item Notations: Prefix (op a b), Infix (a op b), Postfix (a b op).
+\item Multiplicity (Number of arguments expected by an operator): Unary (a++) or (!cond), Binary (a + b), Ternary (cond ? a : b).
+\item Precedence: Order operators (e.g., * > +).
+\item Associativity(decides on same level operators): Left-associative (a - b - c = (a - b) - c), Right- associative (a = b = c = a = (b = c)).
+\item Operand order: Left-to-right (Java), Undefined (C).
+\item Short-circuit: && skips if first false, || skips if first true.
+\end{itemize}
+\begin{figure}  [H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{precedenceLevelsInC.png}
+    \caption{Precedence levels in C}
+    \label{fig:enter-label}
+\end{figure}
+
+\subsection{Unstructured Control Flow}
+\begin{itemize} 
+\item \textbf{Gotos:} Jump to label, unstructured. Basically fuck gotos.
+\item \textbf{Continuations:} Generalize gotos, define new constructs (exceptions, iterators, coroutines).
+\item \textbf{Low-level:} Code address, referencing environment, another continuation.
+\end{itemize}
+
+\subsection{Selection}
+\begin{itemize} 
+\item Branch on condition: if-else, case/switch.
+\item Case/switch: Compare expr to constants, many conditions that compare the same expression to different compile time constants.
+\end{itemize}
+
+\subsection{Iteration}
+\begin{itemize} 
+\item \textbf{Enumeration-controlled:} Initial, bound, step (e.g., for i=1 to 10 by 2).
+\item \textbf{Logically controlled:} Pre (while), Post (do-while), Mid (loop with break).
+\item \textbf{Iterators: }True/generators (yield), Objects (hasNext/next), First-class functions (apply func to each). 
+\end{itemize}
+
+\subsection{Recursion}
+\begin{itemize} 
+\item Equivalent to iteration, your new bestie in functional languages)(because the recursive function typically doesn´t update any non-local variables) 
+\item Efficiency: Stack frames; tail recursion optimizes (last call reuses frame).
+\end{itemize}
+
+\section{Types}
+\subsubsection{Why do we need types?}
+\begin{enumerate}
+    \item Provide context for operations (for example a+b could be concatenation of strings or addition.)
+    \item Limit valid operations. Helping to find bugs early.
+    \item Code readability and understandability. But sometimes type can make code harder to write. 
+    \item Compile time optimazation. Compiler knows which behavior is possible  and which isn´t
+\end{enumerate}
+
+
+
+\subsection{Composite Types}
+Composite types are formed by combining simpler types using type constructors. Common composite types include records, arrays, strings, sets, pointers, and lists.
+
+\subsubsection{Records}
+Records (also structs or structures) store related data of \textbf{heterogeneous types} together. Each data component is called a field.\\
+
+Most programming languages offer some record-like type constructor:
+\begin{itemize}
+    \item C: structs
+    \item C++: special form of class
+    \item Fortran 90: simple "types"
+    \item C\#, Swift: struct types
+    \item OCaml: tuples (order irrelevant)
+    \item Java: records (immutable fields since Java 14)
+\end{itemize}
+
+\subsubsection{Memory Layout}
+Records are typically stored with fields in adjacent memory locations. Field access uses address + offset calculations. Alignment constraints may create "holes" in memory layout depending on architecture requirements.
+
+\subsubsection{Optimization Strategies}
+\begin{itemize}
+    \item \textbf{Packing}: Avoid holes but break alignment (requires additional instructions)
+    \item \textbf{Reordering}: Minimize holes while respecting alignment constraints
+\end{itemize}
+
+Note:\textbf{ C and C++ don't reorder fields by default} as system-level programmers may rely on specific memory layouts.
+
+\subsubsection{Nested Records}
+Records can be nested either lexically (anonymous inner records) or through fields of record type.
+
+\subsubsection{Semantics: Reference vs. Value Model}
+\begin{itemize}
+    \item \textbf{Reference model}: Variable refers to memory location
+    \item \textbf{Value model}: Variable contains the actual value
+    \item C uses reference model for LHS assignments, value model otherwise
+    \item Java uses value model only for built-in types
+\end{itemize}
+
+\subsubsection{Variant Records (Unions)}
+Unions reuse the same memory location for multiple variables, assuming they're never used simultaneously. Size equals the largest member.
+
+\subsection{Arrays}
+Arrays are the most common composite data type, conceptually representing a mapping from index type to element type.
+
+\subsubsection{Multi-Dimensional Arrays}
+Arrays can have multiple dimensions (2D matrices, 3D matrices, etc.). Different languages use different indexing conventions (C: row-major, Fortran: column-major).
+
+\subsubsection{Array Operations}
+\begin{itemize}
+    \item \textbf{Slicing}: Extracting rectangular portions of arrays
+    \item \textbf{Comparison}: Element-wise comparison of equal-length arrays
+    \item \textbf{Mathematical operations}: Element-wise addition, subtraction, etc.
+\end{itemize}
+
+\subsubsection{Memory Layout Significance}
+Memory layout determines efficiency of nested loops through multi-dimensional arrays due to CPU cache behavior. Row-major vs. column-major layouts affect which access patterns are most efficient.
+
+% Type Systems
+\section{Type Systems}
+Type systems define types and their association with programming language constructs, including rules for type equivalence, compatibility, and inference.
+
+\subsection{Why Types Matter}
+\begin{itemize}
+    \item Provide context for operations (e.g., addition vs. concatenation)
+    \item Limit invalid operations to catch bugs early
+    \item Improve code readability and documentation
+    \item Enable compile-time optimizations
+\end{itemize}
+
+\subsection{Type Checking Spectrum}
+\begin{itemize}
+    \item \textbf{Strongly typed}: Operations only on proper types (most languages since 1970s)
+    \item \textbf{Statically typed}: Mostly checked at compile-time
+    \item \textbf{Dynamically typed}: Checking delayed until runtime
+    \item \textbf{Gradual typing}: Optional type annotations with partial static checking
+\end{itemize}
+
+\subsection{Polymorphism}
+\begin{itemize}
+    \item \textbf{Parametric polymorphism}: Code takes types as parameters (generics)
+    \item \textbf{Subtype polymorphism}: Extending/refining supertypes (subclasses)
+    \item \textbf{Polymorphic variables}: Variables that can reference different types
+\end{itemize}
+
+\subsection{Type Equivalence}
+\begin{itemize}
+    \item \textbf{Structural equivalence}: Same structure = same type
+    \item \textbf{Name (nominal) equivalence}: Same name = same type
+\end{itemize}
+
+Each approach has limitations: structural equivalence cannot distinguish differently named but structurally identical types, while name equivalence struggles with type aliases.
+
+
+% Data Abstraction
+\section{Data Abstraction}
+Data abstraction describes classes of memory objects and their associated behavior through abstract data types (sets of values and operations).
+
+
+\subsubsection{Subclasses vs. Subtypes}
+\begin{itemize}
+    \item Subclassing: About reusing code inside a class
+    \item Subtyping: Enables code reuse in clients of a class
+\end{itemize}
+
+\subsubsection{Liskov's Substitutability Principle}
+Each subtype should behave like the supertype when used through the supertype interface. Objects of type A should be replaceable by objects of type B without affecting clients.
+
+\subsubsection{Modifying Inherited Members}
+\begin{itemize}
+    \item Java: Any method can be overridden
+    \item C++: Only virtual methods can be overridden
+    \item Java/C\#: Cannot change visibility of inherited members
+    \item Eiffel: Can restrict or increase visibility
+    \item C++: Public/protected/private inheritance affects member visibility for clients
+\end{itemize}
+
+\subsection{Initialization and Finalization}
+\subsubsection{Constructors}
+\begin{itemize}
+    \item Distinguished by number/type of arguments (C++, Java, C\#) or name (Eiffel)
+    \item Java: Constructors must always be called explicitly
+    \item C++: Constructors sometimes called implicitly (value model)
+    \item Superclass constructors execute before subclass constructors
+\end{itemize}
+
+\subsubsection{Destructors and Finalization}
+\begin{itemize}
+    \item C++: Destructors called when object goes out of scope or deleted
+    \item Execution order: Subclass destructor before superclass destructors (reverse of constructors)
+    \item Java/C\#: Finalizers (deprecated/removed in modern versions) called before garbage collection
+\end{itemize}
+
+\subsection{Dynamic Method Binding}
+\subsubsection{Static vs. Dynamic Binding}
+\begin{itemize}
+    \item Static binding: Based on variable type (compile-time resolution)
+    \item Dynamic binding: Based on object type (runtime resolution)
+    \item Dynamic binding allows subclasses to control their state but has performance overhead
+\end{itemize}
+
+\subsubsection{Language Support}
+\begin{itemize}
+    \item Dynamic binding by default: Smalltalk, Python, Ruby
+    \item Dynamic default but can mark as non-overridable: Java, Eiffel
+    \item Static default but can specify dynamic: C++, C\#
+    \item Virtual method tables (vtables) commonly implement dynamic binding
+\end{itemize}
+
+\section{Lambda Calculus}
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{lambda1.png}
+    \caption{Example}
+    \label{fig:placeholder}
+\end{figure}
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{lambda.png}
+    \caption{Exapmle2}
+    \label{fig:placeholder}
+\end{figure}
+
+
+
+
+% Control Abstraction
+\section{Control Abstraction}
+Control abstraction focuses on abstracting well-defined operations (subroutines, exception handlers) rather than information representation.
+
+\subsection{Calling Sequences}
+Low-level code executed to maintain the call stack, including:
+\begin{itemize}
+    \item Parameter and return value passing
+    \item return address saving
+    \item Register saving/restoring
+    \item Stack and frame pointer updates
+\end{itemize}
+
+\subsubsection{Stack Layout}
+Each procedure call creates a stack frame (activation record) with:
+\begin{itemize}
+    \item Frame pointer: Base address for accessing current frame data
+    \item Stack pointer: First unused/last used location in current frame
+\end{itemize}
+
+\subsubsection{Stack Smashing}
+Buffer overflow vulnerability where malicious input overwrites return addresses, enabling execution of arbitrary code. lets goooooooo
+
+\subsection{Coroutines}
+Control abstraction that allows suspending and resuming execution, implementing non-preemptive multi-tasking.
+
+\subsubsection{Characteristics}
+\begin{itemize}
+    \item Explicit transfer of control (non-preemptive)
+    \item Only one coroutine runs at a time
+    \item Represented by closures (code address + referencing environment)
+\end{itemize}
+
+\subsubsection{Comparison vs. Threads:}
+\begin{itemize}
+    \item  Threads transfer control implicitly and preemptively, multiple threads may run concurrently
+    \item vs. Continuations: Coroutines change program counter when running, continuations remain fixed
+\end{itemize}
+
+\subsubsection{Language Support}
+\begin{itemize}
+    \item Native support: Ruby, Go
+    \item Library support: Java, C\#, JavaScript, Kotlin
+    \item Specialized variants: Python generators
+\end{itemize}
+
+\subsection{Promises, Async, and Await}
+\subsubsection{Motivation}
+Parts of programs may take very long (I/O operations), requiring mechanisms to continue execution without blocking.
+
+\subsubsection{Approaches}
+\begin{itemize}
+    \item Event-driven programming: Register callbacks
+    \item Promises/futures: Objects representing not-yet-computed values
+    \item Async/await: Syntactic sugar for promise-based programming
+\end{itemize}
+
+\subsubsection{Benefits over Event-Driven Code}
+\begin{itemize}
+    \item Cleaner control flow
+    \item Explicit synchronization (e.g., Promise.all)
+    \item Centralized error handling
+    \item Async/await provides sequential-looking syntax without blocking
+\end{itemize}
+
+% Composite Types (Part 2)
+\section{Composite Types Part 2 (yes this is exactly where it is supposed to be) }
+\subsection{Pointers and Recursive Types}
+\begin{itemize}
+    \item Pointers: References to memory locations (addresses)
+    \item Recursive types: Composite types with references to objects of the same type
+    \item Reference model languages: No explicit pointers needed
+    \item Value model languages: Require explicit pointers to avoid copying
+\end{itemize}
+
+\subsection{Operations on Pointers}
+\begin{itemize}
+    \item Creation: Constructor calls, allocation functions, address-of operators
+    \item Allocation: Implicit (OCaml, Java) or explicit (C)
+    \item Dereferencing: Accessing referred memory objects
+    \item Deallocation: Explicit (C, C++, Rust) or garbage collection (Java, C\#, Python)
+\end{itemize}
+
+\subsection{Pointers and Arrays in C}
+\begin{itemize}
+    \item Closely related constructs
+    \item Array access equivalent to pointer arithmetic: E1[E2] ≡ *(E1 + E2)
+    \item Pointer arithmetic includes subtraction and comparison, scaled by type size
+    \item Key difference: Arrays implicitly allocated, pointers require explicit allocation
+\end{itemize}
+
+\subsection{Dangling References and Garbage Collection}
+\subsubsection{Dangling References}
+\begin{itemize}
+    \item Live pointers to invalid objects
+    \item Caused by: Pointers to stack objects escaping scope, heap objects deallocated with living pointers
+    \item Dereferencing behavior is undefined
+\end{itemize}
+
+\subsubsection{Garbage Collection}
+\begin{itemize}
+    \item Automatic memory deallocation managed by language implementation
+    \item Common in managed languages (Java, Python, JavaScript)
+    \item Prevents dangling references and memory leaks
+\end{itemize}
+
+\subsubsection{Implementation Approaches}
+\begin{itemize}
+    \item Reference counting: Count pointers to each object, deallocate when count reaches zero
+    \item Problem: Circular dependencies prevent deallocation
+    \item Mark and sweep: Identify useless blocks by marking reachable objects from external references
+    \item Optimizations: Pointer reversal, stop-and-copy, generational garbage collection
+\end{itemize}
+
+\section{Concurrency}
+
+\subsection{Motivation}
+\begin{itemize}
+    \item Capturing logical structure of inherently concurrent problems
+    \item Exploiting parallel hardware for performance (multi-core processors since ~2005)
+    \item Coping with physical distribution of systems
+\end{itemize}
+
+\textbf{Key Terminology}:
+\begin{itemize}
+    \item \textbf{Concurrent}: Tasks whose execution may be at unpredictable points
+    \item \textbf{Parallel}: Tasks actively executing simultaneously (requires multiple cores)
+    \item \textbf{Distributed}: Tasks on physically separated processors
+\end{itemize}
+
+\textbf{Levels of Parallelism}:
+\begin{itemize}
+    \item Circuit/gate level (hardware handled)
+    \item Instruction-level (hardware handled)
+    \item Vector parallelism (programmer specified)
+    \item Thread-level (programmer specified)
+\end{itemize}
+
+\subsection{Data Races and Correctness}
+\textbf{Data Race Definition}: Two accesses to the same shared memory location where at least one is a write and ordering is non-deterministic.
+
+Data races lead to unpredictable program behavior and must be avoided through proper synchronization.
+
+\subsection{Communication Models}
+\begin{itemize}
+    \item \textbf{Shared Memory}: Variables accessible by multiple threads (Java, C\#, C/C++)
+    \item \textbf{Message Passing}: No shared state, threads communicate via messages (Erlang, Go)
+\end{itemize}
+
+\subsection{Thread Creation and Management}
+\textbf{Process: (OS LEVEL) } OS construct that may execute threads. \\
+\textbf{Thread (PL LEVEL) } Active entity that the programmer thinks of as running concurrently with other threads. \\
+\textbf{Task: (LOGICAL LEVEL) } Unit of work that must be performed by some thread. \\
+\newline
+\textbf{Co-begin: } Compound statement where all statements are executed \textbf{concurrently. }\\
+\textbf{Parallel Loops}: Loop iterations execute concurrently instead of sequentially
+\begin{itemize}
+    \item Can specify data sharing: shared, private, or reduction variables
+    \item Examples: OpenMP in C, Task Parallel Library in C\#
+\end{itemize}
+
+\textbf{Fork/Join}: Explicit thread creation (fork) and termination waiting (join)
+
+\textbf{Thread Pools}: Separate tasks from thread execution
+\begin{itemize}
+    \item Reuse threads to reduce creation overhead
+    \item Pool implementation handles scheduling
+\end{itemize}
+
+\textbf{POSIX Threads (pthreads)}: Low-level API for thread creation and management
+
+\textbf{Message Passing}: Independent threads (actors, goroutines) or exchange messages via channels to avoid pitfalls of shared memory( race conditions) and need for low-level concurrency mechanisms.
+
+\subsection{CILK}
+\textbf{spawn: } calls a fucntion to be executed as a logically concurrent task. Fang einfach an mit parallel \\
+\textbf{sync: } joins all tasks spawned by the calling task.  Warte bis alle gespawnten fertig sind.
+\subsection{Synchronization}
+
+\textbf{Purpose}: Control relative order of operations in different threads\\
+\textbf{Explicit} in \textbf{shared memory model.}\\
+\textbf{Implicit }in message-passing model. \\
+
+\textbf{Two Forms}:
+\begin{itemize}
+    \item \textbf{Spinning/Busy-waiting}: Thread repeatedly checks condition until true
+    \item \textbf{Blocking}: Thread stops/waits until condition becomes true, scheduler reactivates
+\end{itemize}
+
+\textbf{Two Goals}:
+\begin{itemize}
+    \item \textbf{Mutual Exclusion}: Make computations atomic (only one thread in critical section)
+    \item \textbf{Condition Synchronization}: Delay operations until preconditions hold
+\end{itemize}
+
+\textbf{Trade-off}: Synchronization ensures correctness but reduces parallelism
+
+\subsection{Synchronization Mechanisms}
+
+\textbf{Spin Locks}:
+\begin{itemize}
+    \item Provide mutual exclusion using special hardware instructions
+    \item \textbf{Test-and-Set}: Atomically set boolean and return previous value. Problem: repeated writes when lokc is already acquired harms performance ("contention"). \\9
+    \item \textbf{Test-and-Test-and-Set}: Avoid contention by reading before writing
+\end{itemize}
+\\
+\textbf{Barriers}: Ensure all threads finish one phase before entering next
+\begin{itemize}
+    \item Implementation uses atomic fetch-and-decrement
+    \item Shared counter and boolean flag coordination
+\end{itemize}
+\\
+\textbf{Monitors}: Objects with operations, internal state, and condition variables
+\begin{itemize}
+    \item Only one operation active at a time
+    \item Operations can wait on or signal condition variables
+    \item Java: Every object can serve as monitor via \texttt{synchronized}
+\end{itemize}
+\\
+\textbf{Transactional Memory}: Atomicity without explicit locks
+\begin{itemize}
+    \item Speculatively execute code blocks
+    \item Check for conflicts and commit or rollback
+\end{itemize}
+
+\subsection{Language Support for Synchronization}
+
+\textbf{Implicit Synchronization in Parallel Loops}: Some languages (e.g., Fortran 95) provide automatic synchronization on assignments. \textbf{All reads on right hand side are before writes on left hand side} \\
+\textbf{Implicit Synchronization}: Compiler determines dependencies and adds synchronization automatically (extremely difficult in practice)
+\subsubsection{Monitors}
+Object with operations, internal state and condition variables. \\
+Only one operation is active at goven time
+\subsection{Memory Consistency}
+
+\textbf{Sequential Consistency}: Most programmer expectation
+\begin{itemize}
+    \item Each thread's instructions execute in specified order
+    \item Shared memory behaves like global array with immediate reads/writes
+\end{itemize}
+
+\textbf{Relaxed Memory Models}: Reads and writes may occur out of order
+\begin{itemize}
+    \item Hardware and compilers reorder instructions for efficiency
+    \item Different hardware has different reordering behavior
+\end{itemize}
+
+\textbf{Programming Language Memory Models}: PLs define their own consistency guarantees
+\begin{itemize}
+    \item \textbf{Java Memory Model}: Writes not immediately visible without synchronization. Force explicit synchronization.
+    \item \textbf{Volatile fields}: Ensure visibility across threads
+    \item \textbf{Synchronized blocks}: Order reads and writes
+\end{itemize}
+\section{Functional Languages}
+
+\subsection{Introduction to Functional Programming}
+Functional programming represents an alternative to imperative programming languages where:
+\begin{itemize}
+    \item Output is a mathematical function of input (often Lamndas)
+    \item No internal state or side effects (in pure functional languages)
+    \item In practice, boundaries are fuzzy - many "imperative" languages have functional features and vice versa
+\end{itemize}
+
+\subsection{Key Features of Functional Languages}
+\begin{itemize}
+    \item \textbf{First-class functions}: Functions can be assigned to variables, passed as arguments, or used as return values
+    \item \textbf{Extensive polymorphism}: Functions work on different types of values through type inference
+    \item \textbf{List types and operators}: Ideal for recursion (handle first element, then recursively process remainder)
+    \item \textbf{Structured function returns}: Functions can return any structured data including lists and functions
+    \item \textbf{Constructors}: Build aggregate objects inline and all-at-once
+    \item \textbf{Garbage collection}: Necessary due to frequent creation of temporary data
+\end{itemize}
+
+\subsection{Types of Functional Languages}
+\textbf{Purely Functional Languages}
+\begin{itemize}
+    \item Functions depend only on their parameters
+    \item No global or local state dependencies
+    \item Order of evaluation is irrelevant (eager and lazy evaluation yield same results)
+    \item Example: Haskell 
+\end{itemize}
+
+\textbf{Non-Pure Functional Languages}
+\begin{itemize}
+    \item Mix functional features with assignments
+    \item Examples: Scheme (Lisp dialect), OCaml (ML with OO features)
+\end{itemize}
+
+\subsection{Scheme Language Constructs}
+\begin{itemize}
+    \item \textbf{Function Application}: Parentheses denote function calls, first expression is the function, remaining are arguments
+    \item \textbf{Lambda Expressions}: Create anonymous functions with formal parameters and function body
+    \item \textbf{Variable Bindings}: \texttt{let} binds names to values with specific scoping rules
+    \item \textbf{Conditionals}: \texttt{if} for simple conditions, \texttt{cond} for multiway conditionals. second/third argument is vlaue returned if true/false
+    \item \textbf{Dynamic Typing}: Types determined and checked at runtime, enabling implicit polymorphism
+    \item \textbf{List Operations}: \textbf{car} (first element), \textbf{cdr} (rest),  \textbf{cons} (join head to tail)
+    \item \textbf{Side Effects}: \textbf{set! }for variable assignment, \textbf{set-car!} assigning head of list and \textbf{set-cdr!} for assigning tail of list
+\end{itemize}
+
+\subsection{Evaluation Order}
+Two primary evaluation strategies:
+\begin{itemize}
+    \item \textbf{Applicative-order}: Evaluate arguments before passing to function  Meistens von rechts nach links schonmal alles in Klammern ausrechnen.
+    \item \textbf{Normal-order}: Pass arguments unevaluated, evaluate when needed
+\end{itemize}
+
+Evaluation order affects both performance and correctness. Lazy evaluation evaluates subexpressions on-demand and memoizes results, transparent to programmers only in pure functional languages.
+\section*{C Memory Management Cheat Sheet}
+
+\subsection*{Memory Layout (typical C program)}
+
+  \item \textbf{Heap}: dynamic memory (controlled by \texttt{malloc}, \texttt{calloc}, \texttt{realloc}, \texttt{free}).
+  \item \textbf{Stack}: function calls, local variables, return addresses.
+\end{itemize}
+
+\subsection*{Key Functions}
+\begin{itemize}
+  \item \texttt{void* malloc(size\_t size)}  
+    \begin{itemize}
+      \item Allocates a block of \texttt{size} bytes on the \textbf{heap}.
+      \item Contents are \textbf{uninitialized} (may contain garbage values).
+      \item Returns a \texttt{void*} pointer (NULL if allocation fails).
+    \end{itemize}
+
+  \item \texttt{void* calloc(size\_t n, size\_t size)}  
+    \begin{itemize}
+      \item Allocates space for \texttt{n} elements of given \texttt{size}.
+      \item Memory is set to \textbf{zero}.
+      \item Returns a pointer to heap memory.
+    \end{itemize}
+
+  \item \texttt{void* realloc(void* ptr, size\_t new\_size)}  
+    \begin{itemize}
+      \item Changes size of memory block pointed by \texttt{ptr} to \texttt{new\_size}.
+      \item May move block to a new location in the \textbf{heap}.
+      \item Contents are preserved (up to the minimum of old and new size).
+    \end{itemize}
+
+  \item \texttt{void free(void* ptr)}  
+    \begin{itemize}
+      \item Deallocates (releases) memory previously allocated on the heap.
+      \item Does not change \texttt{ptr} itself (dangling pointer if reused).
+    \end{itemize}
+\end{itemize}
+
+\subsection*{Notes}
+\begin{itemize}
+  \item Always check if allocation succeeded (\texttt{if (p == NULL) ...}).
+  \item Memory leaks occur if allocated memory is not freed.
+  \item Accessing freed memory = \textbf{undefined behavior}.
+\end{itemize}
+
+
+\end{document}
