@@ -15,6 +15,12 @@ The summary covers the following topics:
 - Comparison of various approaches
 - additional notes as exam prep
 
+## 📁 Project Structure
+
+- `main.tex` - Main LaTeX document
+- `images/` - Folder containing all figures and diagrams used in the document
+- `README.md` - This file
+
 ## 🛠️ Usage
 
 This project uses **LaTeX** to create a professional PDF document.
